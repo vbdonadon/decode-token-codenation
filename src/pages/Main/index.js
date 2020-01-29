@@ -35,12 +35,30 @@ export default class Main extends Component {
   handleKeyUp = event => {};
 
   handleDecode = event => {
-    const { encrypted } = this.state;
+    const { encrypted, spacing } = this.state;
     const encryptedArray = [];
+    const decodedArray = [];
 
-    for (let i = 0; i <= encrypted.length; i += 1) {
-      encryptedArray.push(encrypted.charCodeAt(i));
+    console.log(encrypted.length);
+
+    for (let i = 0; i < (encrypted.length + 1); i++) {
+      console.log(i);
+      if(encrypted.charCodeAt(i) <= 99) {
+        if (encrypted.charCodeAt(i) === 97) { encryptedArray.push(120); }
+        if (encrypted.charCodeAt(i) === 98) { encryptedArray.push(121); }
+        if (encrypted.charCodeAt(i) === 99) { encryptedArray.push(122); }
+        if (encrypted.charCodeAt(i) === 29) { encryptedArray.push(32 + spacing); }
+        if (encrypted.charCodeAt(i) === 43) { encryptedArray.push(43 + spacing); }
+      } else {
+        encryptedArray.push(encrypted.charCodeAt(i) - spacing);
+      }
+
+      // Decoding
+      decodedArray.push(String.fromCharCode(encryptedArray[i]));
     }
+
+    console.log(encryptedArray);
+    console.log(decodedArray);
   };
 
   render() {
