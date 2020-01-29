@@ -32,37 +32,53 @@ export default class Main extends Component {
     event.preventDefault();
   };
 
-  handleKeyUp = event => {};
+  handleKeyUp = () => {};
 
-  handleDecode = event => {
+  handleDecode = () => {
     const { encrypted, spacing } = this.state;
-    const encryptedArray = [];
-    const decodedArray = [];
 
-    console.log(encrypted.length);
-
-    for (let i = 0; i < (encrypted.length + 1); i++) {
-      console.log(i);
-      if(encrypted.charCodeAt(i) <= 99) {
-        if (encrypted.charCodeAt(i) === 97) { encryptedArray.push(120); }
-        if (encrypted.charCodeAt(i) === 98) { encryptedArray.push(121); }
-        if (encrypted.charCodeAt(i) === 99) { encryptedArray.push(122); }
-        if (encrypted.charCodeAt(i) === 29) { encryptedArray.push(32 + spacing); }
-        if (encrypted.charCodeAt(i) === 43) { encryptedArray.push(43 + spacing); }
-      } else {
-        encryptedArray.push(encrypted.charCodeAt(i) - spacing);
+    const encryptedToCharCode = () => {
+      const charCodeEncrypted = [];
+      // Getting all the letters encrypted
+      for (let index = 0; index < encrypted.length; index += 1) {
+        charCodeEncrypted.push(encrypted.charCodeAt(index));
       }
 
-      // Decoding
-      decodedArray.push(String.fromCharCode(encryptedArray[i]));
-    }
+      return charCodeEncrypted;
+    };
 
-    console.log(encryptedArray);
-    console.log(decodedArray);
+    const charCodeToDecodedString = value => {
+      const charCode = value;
+      const decodedCharCode = [];
+      const decodedString = decodedCharCode.join('');
+
+      // Necessário verificar se o charCode - spacing é menor do que o alphabet charCode
+      for (let index = 0; index < charCode.length; index += 1) {
+        if (encrypted.charCodeAt(index) === 97) {
+          decodedCharCode.push(String.fromCharCode(120));
+        } else if (encrypted.charCodeAt(index) === 98) {
+          decodedCharCode.push(String.fromCharCode(121));
+        } else if (encrypted.charCodeAt(index) === 99) {
+          decodedCharCode.push(String.fromCharCode(122));
+        } else if (encrypted.charCodeAt(index) === 32) {
+          decodedCharCode.push(' ');
+        } else if (encrypted.charCodeAt(index) === 46) {
+          decodedCharCode.push('.');
+        } else {
+          decodedCharCode.push(String.fromCharCode(charCode[index] - 3));
+        }
+      }
+
+      return decodedString;
+    };
+
+    charCodeToDecodedString(encryptedToCharCode());
+
+    this.setState({ decoded: charCodeToDecodedString(encryptedToCharCode()) });
   };
 
   render() {
-    const { token, encrypted, spacing } = this.state;
+    const { token, encrypted, spacing, decoded } = this.state;
 
     return (
       <Container>
@@ -88,7 +104,7 @@ export default class Main extends Component {
           <Row>
             <strong className="title">Decoded:</strong>
             <pre>
-              <code>{encrypted}</code>
+              <code>{decoded}</code>
             </pre>
           </Row>
 
