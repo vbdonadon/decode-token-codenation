@@ -1,10 +1,14 @@
 import React, { Component } from 'react';
 
+// Libs
 import sha1 from 'sha1';
+import { getApi, postApi } from '../../services/api';
 
+// Styled Components
 import { Container, Row, Box, Button, InputToken } from './styles';
 
-import api from '../../services/api';
+// Assets
+import codenation from '../../assets/codenation.svg';
 
 export default class Main extends Component {
   state = {
@@ -12,28 +16,26 @@ export default class Main extends Component {
     encrypted: '',
     decoded: '',
     spacing: '',
+    sha1: '',
   };
 
-  componentDidMount() {
-    this.loadData();
-  }
-
-  loadData = async () => {
-    const response = await api.get(
-      `/generate-data?token=1ef8bab35e62e32dd8e6579b39d874dc7d5d894f`
-    );
+  handleSubmit = async event => {
+    event.preventDefault();
+    const { token } = this.state;
+    const response = await getApi.get(`/generate-data?token=${token}`);
 
     // Getting data from API
-    const { token, cifrado: encrypted, numero_casas } = response.data;
+    const { cifrado: encrypted, numero_casas } = response.data;
 
-    this.setState({ token, encrypted, spacing: numero_casas });
+    this.setState({ encrypted, spacing: numero_casas });
   };
 
-  handleSubmit = event => {
-    event.preventDefault();
-  };
+  // Setting the token value
+  handleKeyUp = event => {
+    const { value } = event.target;
 
-  handleKeyUp = () => {};
+    this.setState({ token: value });
+  };
 
   handleDecode = () => {
     const { encrypted, spacing } = this.state;
@@ -48,6 +50,8 @@ export default class Main extends Component {
       return charCodeEncrypted;
     };
 
+    // This function will get the return of encryptedToCharCode function to transform into
+    // a String decoded.
     const charCodeToDecodedString = value => {
       const charCode = value;
       const decodedCharCode = [];
@@ -83,44 +87,103 @@ export default class Main extends Component {
     this.setState({ decoded: charCodeToDecodedString(encryptedToCharCode()) });
   };
 
+  handleSha1 = () => {
+    const { decoded } = this.state;
+    this.setState({ sha1: sha1(decoded) });
+  };
+
+  sendData = async () => {
+    const { spacing, token, encrypted, decoded, sha1 } = this.state;
+    const formData = new FormData();
+    formData.append(
+      'answer',
+      {
+        numero_casas: spacing,
+        token,
+        cifrado: encrypted,
+        decifrado: decoded,
+        resumo_criptografico: sha1,
+      },
+      'answer.json'
+    );
+
+    await postApi.post(
+      `submit-solution?token=${token}`,
+      {
+        formData,
+      },
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+  };
+
   render() {
-    const { token, encrypted, spacing, decoded } = this.state;
+    const { token, encrypted, spacing, decoded, sha1 } = this.state;
 
     return (
       <Container>
         <Box>
+          <header>
+            <img src={codenation} alt="Logo da Codenation AceleraDEV" />
+            <span className="tooltip">?</span>
+          </header>
+
           <Row>
-            <form onSubmit={this.handleSubmit} encType="multipart/form-data">
+            <form
+              onSubmit={this.handleSubmit}
+              className="input-form"
+              encType="multipart/form-data"
+            >
               <label htmlFor="token" className="title">
                 Token:
               </label>
-              <InputToken
-                onKeyUp={this.handleKeyUp}
-                type="text"
-                id="token"
-                value={token}
-                readOnly
-              />
-              <Button type="submit">Get Data</Button>
+              <InputToken onKeyDown={this.handleKeyUp} type="text" id="token" />
             </form>
           </Row>
 
           <Row>
-            <strong className="title">Encrypted:</strong>
+            <header>
+              <strong className="title">Encrypted:</strong>
+              <code> rule: {spacing}</code>
+            </header>
             <pre>
-              <code>{encrypted}</code>
+              <code>
+                {encrypted ||
+                  'If the token value is already ready, just click on Get Data.'}
+              </code>
             </pre>
-            <Button onClick={this.handleDecode}>Decode</Button>
+            <Button disabled={!token} onClick={this.handleDecode}>
+              Decode
+            </Button>
           </Row>
 
           <Row>
             <strong className="title">Decoded:</strong>
             <pre>
-              <code>{decoded}</code>
+              <code>
+                {decoded ||
+                  'If the encrypted value is already ready, just click on decode.'}
+              </code>
+            </pre>
+            <Button disabled={!decoded} onClick={this.handleSha1}>
+              Encrypt to SHA1
+            </Button>
+          </Row>
+
+          <Row>
+            <strong className="title">SHA1:</strong>
+            <pre>
+              <code>
+                {sha1 ||
+                  'If the decoded value is already ready, just click on Encrypt to Sha1.'}
+              </code>
             </pre>
           </Row>
 
-          {spacing}
+          <Button onClick={this.sendData}>Send Data</Button>
         </Box>
       </Container>
     );

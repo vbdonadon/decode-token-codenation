@@ -1,7 +1,11 @@
 import axios from 'axios';
 
-const api = axios.create({
+const getApi = axios.create({
   baseURL: 'https://api.codenation.dev/v1/challenge/dev-ps/',
 });
 
-export default api;
+const postApi = axios.create({
+  baseURL: 'https://api.codenation.dev/v1/challenge/dev-ps/',
+});
+
+export { getApi, postApi };
