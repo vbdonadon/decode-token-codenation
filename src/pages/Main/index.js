@@ -1,12 +1,13 @@
 import React, { Component } from 'react';
 
+import sha1 from 'sha1';
+
 import { Container, Row, Box, Button, InputToken } from './styles';
 
 import api from '../../services/api';
 
 export default class Main extends Component {
   state = {
-    getToken: '',
     token: '',
     encrypted: '',
     decoded: '',
@@ -19,7 +20,7 @@ export default class Main extends Component {
 
   loadData = async () => {
     const response = await api.get(
-      `/generate-data?token=b4dec9bfe985a48a2209f2790bfe77a0ec7be914`
+      `/generate-data?token=1ef8bab35e62e32dd8e6579b39d874dc7d5d894f`
     );
 
     // Getting data from API
@@ -37,9 +38,9 @@ export default class Main extends Component {
   handleDecode = () => {
     const { encrypted, spacing } = this.state;
 
+    // This function return all the letters encrypted;
     const encryptedToCharCode = () => {
       const charCodeEncrypted = [];
-      // Getting all the letters encrypted
       for (let index = 0; index < encrypted.length; index += 1) {
         charCodeEncrypted.push(encrypted.charCodeAt(index));
       }
@@ -50,24 +51,29 @@ export default class Main extends Component {
     const charCodeToDecodedString = value => {
       const charCode = value;
       const decodedCharCode = [];
-      const decodedString = decodedCharCode.join('');
+      let decodedString = '';
 
-      // Necessário verificar se o charCode - spacing é menor do que o alphabet charCode
       for (let index = 0; index < charCode.length; index += 1) {
-        if (encrypted.charCodeAt(index) === 97) {
-          decodedCharCode.push(String.fromCharCode(120));
-        } else if (encrypted.charCodeAt(index) === 98) {
-          decodedCharCode.push(String.fromCharCode(121));
-        } else if (encrypted.charCodeAt(index) === 99) {
-          decodedCharCode.push(String.fromCharCode(122));
-        } else if (encrypted.charCodeAt(index) === 32) {
-          decodedCharCode.push(' ');
-        } else if (encrypted.charCodeAt(index) === 46) {
-          decodedCharCode.push('.');
+        const code = charCode[index];
+
+        // Threating exceptions like " ", ".";
+        if (code < 97 || code > 122) {
+          decodedCharCode.push(String.fromCharCode(code));
         } else {
-          decodedCharCode.push(String.fromCharCode(charCode[index] - 3));
+          const realCode = code - spacing;
+          const filter = 96;
+
+          // If the constant realCode is not a valid letter, do this treatment.
+          if (realCode < 97) {
+            const threatedCode = filter - realCode;
+            decodedCharCode.push(String.fromCharCode(122 - threatedCode));
+          } else {
+            decodedCharCode.push(String.fromCharCode(realCode));
+          }
         }
       }
+
+      decodedString = decodedCharCode.join('');
 
       return decodedString;
     };
@@ -84,11 +90,17 @@ export default class Main extends Component {
       <Container>
         <Box>
           <Row>
-            <form onSubmit={this.handleSubmit}>
+            <form onSubmit={this.handleSubmit} encType="multipart/form-data">
               <label htmlFor="token" className="title">
                 Token:
               </label>
-              <InputToken onKeyUp={this.handleKeyUp} type="text" id="token" value={token} readOnly />
+              <InputToken
+                onKeyUp={this.handleKeyUp}
+                type="text"
+                id="token"
+                value={token}
+                readOnly
+              />
               <Button type="submit">Get Data</Button>
             </form>
           </Row>
